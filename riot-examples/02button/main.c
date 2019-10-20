@@ -2,36 +2,29 @@
 #include "xtimer.h"
 #include "timex.h"
 #include "periph/gpio.h"
-//#define DELAY 100
- xtimer_ticks64_t I, J;
- uint64_t B, A;
+xtimer_ticks64_t time;
+xtimer_ticks64_t curtime;
+
 // Обработчик прерывания по нажатию кнопки
 void btn_handler(void *arg)
 {
   // Прием аргументов, передаваемых из главного потока.
   (void)arg;
-  J=xtimer_now64 ();
-  A=xtimer_usec_from_ticks64(J);
-  if (A-B>100000)
-	 {
-
-	  gpio_toggle(GPIO_PIN(PORT_C, 8));
-	  	  I=xtimer_now64 ();
-	B=xtimer_usec_from_ticks64(I);
-	}
-
+  // Переключение состояния пина PC8
+  curtime = xtimer_now64();
+  if (xtimer_usec_from_ticks64(curtime) - xtimer_usec_from_ticks64(time) > 100000) {
+    gpio_toggle(GPIO_PIN(PORT_C, 8));
+    time = xtimer_now64();
+  }
 }
 
 
 int main(void)
 {
-
   // Инициализация пина PA0, к которому подключена кнопка, как источника прерывания.
   // GPIO_RISING - прерывание срабатывает по фронту
   // btn_handler - имя функции обработчика прерывания
   // NULL - ничего не передаем в аргументах
-	I=xtimer_now64 ();
-B=xtimer_usec_from_ticks64(I);
   gpio_init_int(GPIO_PIN(PORT_A, 0), GPIO_IN, GPIO_BOTH, btn_handler, NULL);
   // Инициализация пина PC8 на выход
 	gpio_init(GPIO_PIN(PORT_C, 8), GPIO_OUT);
